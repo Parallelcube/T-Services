@@ -1,0 +1,7 @@
+.vscode
+venv*
+
+build
+__pycache__
+target
+Cargo.lock

@@ -1,0 +1,16 @@
+[package]
+name = "rsservice"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "daemon"
+path = "src/daemon/bin/main.rs"
+
+[[bin]]
+name = "client"
+path = "src/client/bin/main.rs"
+
+
+[dependencies]
+nix = { version = "0.28.0", features = ["mqueue"] }
