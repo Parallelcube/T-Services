@@ -1,2 +1,2 @@
 #!/bin/bash
-../rust/target/debug/rsservice
+../rust/target/debug/rsworker

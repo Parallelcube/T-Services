@@ -1,7 +1,7 @@
-use super::logger::log;
-use super::enums::EExitCode;
-use super::service_config::ServiceConfig;
-use super::mq_handler::MQHandler;
+use crate::pcube::common::logger::log;
+use crate::pcube::common::enums::EExitCode;
+use crate::pcube::common::service_config::ServiceConfig;
+use crate::pcube::common::mq_handler::MQHandler;
 
 pub struct Service 
 {
@@ -46,23 +46,14 @@ impl Service
         let mut exit_code = EExitCode::SUCCESS;
         if self.start_listener()
         {
-            if self.config.is_host
-            {
-                self.mq_handler.send_wait("task-1");
-            }
-
+            self.mq_handler.send_wait("task-1");
             while self.listening
             {
-                let (message, status) = self.mq_handler.receive_wait();
+                let (_message, status) = self.mq_handler.receive_wait();
                 match status
                 {
                     EExitCode::SUCCESS => 
                     {
-                        if !self.config.is_host
-                        {
-                            let message = format!("{} processed", message);
-                            self.mq_handler.send_wait(message.as_str());
-                        }
                         self.stop_listener();
                     }
                     EExitCode::FAIL => 

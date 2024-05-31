@@ -1,16 +1,12 @@
-mod pcube;
-
 use std::process::ExitCode;
-use std::env;
 
-use pcube::enums::EExitCode;
-use pcube::service_config::ServiceConfig;
-use pcube::service::Service;
+use rsservices::pcube::common::enums::EExitCode;
+use rsservices::pcube::common::service_config::ServiceConfig;
+use rsservices::pcube::worker::service::Service;
 
 fn main() -> ExitCode
 {
-    let mut args = env::args().collect::<Vec<String>>().clone();
-    args.remove(0);
+    let mut args= vec![];
     let service_config = ServiceConfig::new(&mut args);
     let mut service = Service::new(service_config);
     let exit_code = match service.run() {

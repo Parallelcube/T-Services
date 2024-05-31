@@ -1,16 +1,15 @@
 [package]
-name = "rsservice"
+name = "rsservices"
 version = "0.1.0"
 edition = "2021"
 
 [[bin]]
-name = "daemon"
-path = "src/daemon/bin/main.rs"
+name = "rshost"
+path = "src/bin/main_host.rs"
 
 [[bin]]
-name = "client"
-path = "src/client/bin/main.rs"
-
+name = "rsworker"
+path = "src/bin/main_worker.rs"
 
 [dependencies]
 nix = { version = "0.28.0", features = ["mqueue"] }
