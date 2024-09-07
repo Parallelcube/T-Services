@@ -1,8 +1,7 @@
 import sys
 import signal 
 
-
-from pcube.worker.service_config import ServiceConfig
+from pcube.common.service_config import ServiceConfig
 from pcube.worker.service import Service
 from pcube.common.logger import log
 

@@ -15,6 +15,7 @@ namespace pcube
         bool        is_host;
         std::string q_name_host;
         std::string q_name_worker;
+        std::string sm_name;
 
     private:
         void match_is_host(std::vector<std::string>& args);

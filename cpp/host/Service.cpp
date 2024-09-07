@@ -24,13 +24,18 @@ std::string bool_to_string(bool value)
 bool Service::start_listener()
 {
     _listening = true;
-    int exit_code = _mq_handler.connect(_config.q_name_host, _config.q_name_worker);
-    if (exit_code == EXIT_SUCCESS)
+    if (_sm_handler.connect(_config.sm_name) != EXIT_SUCCESS)
     {
-        log("Service start listening : host("+bool_to_string(_config.is_host)+")");
-        return true;
+        return false;
     }
-    return false;
+
+    if (_mq_handler.connect(_config.q_name_host, _config.q_name_worker) != EXIT_SUCCESS)
+    {
+        return false;
+    }
+
+    log("Service start listening : host("+bool_to_string(_config.is_host)+")");
+    return true;
 }
 
 void Service::stop_listener()
@@ -38,33 +43,51 @@ void Service::stop_listener()
     _listening = false;
     log("Service stop listening");
     _mq_handler.disconnect(_config.is_host);
+    _sm_handler.disconnect(_config.is_host);
 }
 
 int Service::run()
 {
-    int exit_code = EXIT_SUCCESS;
-    if (start_listener())
-    {
-        _mq_handler.send_wait("task-1");
-        std::string message;
-        while (_listening)
-        {
-            int status = _mq_handler.receive_wait(message);
-            if (status == EXIT_SUCCESS)
-            {
-                stop_listener();
-            }
-            else
-            {
-                exit_code = EXIT_FAILURE;
-                stop_listener();
-            }
-        }
-    }
-    else
+    if (!start_listener())
     {
         log("Unable to init listener");
-        exit_code = EXIT_FAILURE;
+        return EXIT_FAILURE;
     }
-    return exit_code;
+
+    std::string payload("payload of task-1");
+
+    if (_sm_handler.write(payload) != EXIT_SUCCESS)
+    {
+        return handle_run_error();
+    }
+
+    if (_mq_handler.send_wait(std::to_string(payload.size())) != EXIT_SUCCESS)     
+    {
+        return handle_run_error();
+    }
+
+    std::string message;
+    while (_listening)
+    {
+        if (_mq_handler.receive_wait(message) != EXIT_SUCCESS)
+        {
+            return handle_run_error();
+        }
+
+        payload.resize(stoi(message));
+        if (_sm_handler.read(payload) != EXIT_SUCCESS)
+        {
+            return handle_run_error();
+        }
+
+        stop_listener();
+    }
+
+    return EXIT_SUCCESS;
+}
+
+int Service::handle_run_error()
+{
+    stop_listener();
+    return EXIT_FAILURE;
 }

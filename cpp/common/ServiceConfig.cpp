@@ -7,6 +7,7 @@ using namespace pcube;
 
 constexpr const char* SYSTEM_HOST_QUEUE_NAME = "/mq_queue_host";
 constexpr const char* SYSTEM_WORKER_QUEUE_NAME = "/mq_queue_worker";
+constexpr const char* SYSTEM_SM_QUEUE_NAME = "/sm_services";
 
 ServiceConfig::ServiceConfig(std::vector<std::string>& args):is_host(false)
 {
@@ -21,6 +22,8 @@ ServiceConfig::ServiceConfig(std::vector<std::string>& args):is_host(false)
         q_name_host = SYSTEM_WORKER_QUEUE_NAME;
         q_name_worker = SYSTEM_HOST_QUEUE_NAME;
     }
+
+    sm_name = SYSTEM_SM_QUEUE_NAME;
 }
 
 ServiceConfig::~ServiceConfig()
