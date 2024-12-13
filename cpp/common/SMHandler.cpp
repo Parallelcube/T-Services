@@ -14,7 +14,6 @@
 using namespace pcube;
 
 constexpr int SM_ERROR = -1;
-constexpr long INITIAL_SIZE = 512;
 
 SMHandler::SMHandler(): _sm_name(""),
                         _sm_segment(SM_ERROR),
@@ -31,7 +30,7 @@ SMHandler::~SMHandler()
 int SMHandler::connect(const std::string& name)
 {
     _sm_name = name;
-    _sm_segment = shm_open(_sm_name.c_str(), O_RDWR, 0600);
+    _sm_segment = shm_open(_sm_name.c_str(), O_CREAT | O_RDWR, 0600);
     if (_sm_segment == SM_ERROR)
     {
         log(std::string("Error shm_open with (") + _sm_name + ") " + strerror(errno) + "'");
@@ -60,6 +59,11 @@ int SMHandler::disconnect(const bool& unlink)
 
     if (_sm_segment != SM_ERROR)
     {
+        if (unlink)
+        {
+            shm_unlink(_sm_name.c_str());
+        }
+
         if (close(_sm_segment) == SM_ERROR)
         {
             log(std::string("Error close with ") + strerror(errno));
@@ -107,7 +111,7 @@ int SMHandler::read(std::string& buffer)
     if (_sm_ptr)
     {
         buffer.assign((char*)_sm_ptr, buffer.size());
-        log(std::string("Shared memory read '") + buffer + "'");
+        log(std::string("Shared memory read '") + buffer + "' " + std::to_string(buffer.size()) + " bytes");
     }
     return EXIT_SUCCESS;
 }
@@ -117,7 +121,7 @@ int SMHandler::write(const std::string& buffer)
     int exit_code = EXIT_SUCCESS;
     
     size_t segment_size = get_current_size();
-    log(std::string("Shared memory write message '") + buffer + "' " + std::to_string(buffer.size()) +" bytes");
+    log(std::string("Shared memory write '") + buffer + "' " + std::to_string(buffer.size()) +" bytes");
     size_t new_size = calculate_best_size(buffer.size());
     if (segment_size != new_size)
     {

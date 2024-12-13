@@ -1,4 +1,4 @@
-from posix_ipc import SharedMemory, O_CREAT, unlink_shared_memory
+from posix_ipc import SharedMemory, O_CREAT, O_RDWR
 import mmap
 
 from pcube.common.enums import EExitCode
@@ -34,7 +34,7 @@ class SMHandler:
 
     def connect(self, name: str) -> EExitCode:
         optimal_size = SMHandler.calculate_best_size(SMHandler.INITIAL_SIZE)
-        self._sm_segment = SharedMemory(name, O_CREAT, size=optimal_size)
+        self._sm_segment = SharedMemory(name, O_CREAT | O_RDWR, size=optimal_size)
         if self._sm_segment is None:
             log(f"Error opening shared memory")
             return EExitCode.FAIL
@@ -51,7 +51,8 @@ class SMHandler:
 
         if self._sm_segment is not None:
             try:
-                unlink_shared_memory(self._sm_segment.name)
+                if unlink:
+                    self._sm_segment.unlink()
                 self._sm_segment.close_fd()
             except Exception as ex:
                 log(f"Error sm segment close {ex}")
