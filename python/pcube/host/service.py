@@ -24,7 +24,7 @@ class Service:
         self._listening = False
         log("Service stop listening")
         self._mq_handler.disconnect(self._config.is_host)
-        self._sm_handler.disconnect(self._config.is_host)
+        return self._sm_handler.disconnect(self._config.is_host)
 
     def handle_run_error(self) -> EExitCode: 
         self.stop_listener()
