@@ -37,11 +37,11 @@ class Service:
 
         payload_request = "payload of task-1"
 
-        write_size, status = self._sm_handler.write(payload_request)
+        status = self._sm_handler.write(payload_request)
         if status != EExitCode.SUCCESS:
             return self.handle_run_error()
         
-        status = self._mq_handler.send_wait(str(write_size))
+        status = self._mq_handler.send_wait(str(len(payload_request)))
         if status != EExitCode.SUCCESS:
             return self.handle_run_error()
     

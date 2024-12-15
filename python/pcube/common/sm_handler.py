@@ -60,7 +60,7 @@ class SMHandler:
             self.sm_segment = None
         return EExitCode.SUCCESS
 
-    def write(self, payload: str) -> tuple[int, EExitCode]:
+    def write(self, payload: str) -> EExitCode:
         payload_size = len(payload)
         log(f"Shared memory write '{payload}' {payload_size} bytes")
         exit_code = EExitCode.SUCCESS
@@ -72,10 +72,10 @@ class SMHandler:
             try:
                 self.map_file.seek(0)
                 _ = self.map_file.write(payload.encode())
-                return payload_size, exit_code
+                return exit_code
             except Exception as ex:
                 log(f"Error sm write {ex}")
-        return None, EExitCode.FAIL
+        return EExitCode.FAIL
     
     def read(self, payload_size: int) -> tuple[str, EExitCode]:
         if self.update_map() == EExitCode.SUCCESS:

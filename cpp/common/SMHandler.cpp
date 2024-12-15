@@ -132,7 +132,7 @@ int SMHandler::write(const std::string& buffer)
         }
         else
         {
-            log(std::string("Error resizing shared memory") + strerror(errno));
+            log(std::string("Error resizing shared memory ") + strerror(errno));
             exit_code = EXIT_FAILURE;
         }
     }

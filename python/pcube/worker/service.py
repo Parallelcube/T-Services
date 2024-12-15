@@ -47,11 +47,11 @@ class Service:
             
             payload = payload + " processed"
 
-            write_size, status = self._sm_handler.write(payload)
+            status = self._sm_handler.write(payload)
             if status != EExitCode.SUCCESS:
                 return self.handle_run_error()
 
-            self._mq_handler.send_wait(str(write_size))
+            self._mq_handler.send_wait(str(len(payload)))
             self.stop_listener()
 
         return exit_code
