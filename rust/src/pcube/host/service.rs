@@ -43,7 +43,6 @@ impl Service
 
         log(&format!("Service start listening : host({})", self.config.is_host));
         return true;
-
     }
 
     pub fn stop_listener(&mut self) -> EExitCode 
@@ -71,46 +70,30 @@ impl Service
         let payload_request = "payload of task-1";
 
         let status  = self.sm_handler.write(payload_request);
-        match status
+        if status != EExitCode::SUCCESS
         {
-            EExitCode::SUCCESS => 
-            {
-                return self.handle_run_error()
-            }
-            _ => {}
+            return self.handle_run_error()
         }
 
         let status = self.mq_handler.send_wait(payload_request.len().to_string().as_str());
-        match status
+        if status != EExitCode::SUCCESS
         {
-            EExitCode::SUCCESS => 
-            {
-                return self.handle_run_error()
-            }
-            _ => {}
+            return self.handle_run_error()
         }
 
 
         while self.listening
         {
             let (response_message, status) = self.mq_handler.receive_wait();
-            match status
+            if status != EExitCode::SUCCESS
             {
-                EExitCode::SUCCESS => 
-                {
-                    return self.handle_run_error()
-                }
-                _ => {}
+                return self.handle_run_error()
             }
 
             let (_payload_response, status) = self.sm_handler.read(response_message.parse::<usize>().unwrap());
-            match status
+            if status != EExitCode::SUCCESS
             {
-                EExitCode::SUCCESS => 
-                {
-                    return self.handle_run_error()
-                }
-                _ => {}
+                return self.handle_run_error()
             }
 
             self.stop_listener();
