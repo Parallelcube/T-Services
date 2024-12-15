@@ -1,19 +1,21 @@
 
 const SYSTEM_HOST_QUEUE_NAME: &str = "/mq_queue_host";
 const SYSTEM_WORKER_QUEUE_NAME: &str = "/mq_queue_worker";
+const SYSTEM_SM_NAME: &str = "/sm_services";
 
 pub struct ServiceConfig 
 {
     pub is_host: bool,
     pub q_name_host: Option<String>,
-    pub q_name_worker: Option<String>
+    pub q_name_worker: Option<String>,
+    pub sm_name: Option<String>
 }
 
 impl ServiceConfig
 {
     pub fn new(args: &mut Vec<String>) -> Self 
     {
-        let mut config = Self {is_host: false, q_name_host: None, q_name_worker: None};
+        let mut config = Self {is_host: false, q_name_host: None, q_name_worker: None, sm_name: None};
         config.match_is_host(args);
         if config.is_host
         {
@@ -25,6 +27,7 @@ impl ServiceConfig
             config.q_name_host = Some(SYSTEM_WORKER_QUEUE_NAME.to_string());
             config.q_name_worker = Some(SYSTEM_HOST_QUEUE_NAME.to_string());
         }
+        config.sm_name = Some(SYSTEM_SM_NAME.to_string());
         return config;
     }
 
