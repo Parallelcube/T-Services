@@ -31,7 +31,6 @@ class Service:
         return EExitCode.FAIL
     
     def run(self) -> EExitCode:
-        exit_code = EExitCode.SUCCESS
         if not self.start_listener():
             log("Unable to init listener")
             return self.stop_listener()
@@ -54,5 +53,5 @@ class Service:
             self._mq_handler.send_wait(str(len(payload)))
             self.stop_listener()
 
-        return exit_code
+        return EExitCode.SUCCESS
         
