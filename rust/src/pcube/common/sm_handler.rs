@@ -5,7 +5,7 @@ use super::enums::EExitCode;
 use nix::fcntl::OFlag;
 use nix::sys::mman::{shm_open, shm_unlink, mmap, munmap, MapFlags};
 use nix::sys::stat::{fstat, Mode};
-use nix::unistd::{close, ftruncate};
+use nix::unistd::ftruncate;
 use nix::libc::{sysconf, _SC_PAGESIZE};
 use std::{str, ptr, ptr::NonNull, num::NonZero};
 use std::os::unix::io::{OwnedFd, AsRawFd};
@@ -35,9 +35,9 @@ impl SMHandler
 
     fn get_current_size(&self) -> usize
     {
-        if let Some(shm_fd) = &self.sm_segment
+        if let Some(sm_fd) = &self.sm_segment
         {
-            match fstat(shm_fd.as_raw_fd())
+            match fstat(sm_fd.as_raw_fd())
             {
                 Ok(file_stats) => { return file_stats.st_size as usize; }
                 Err(_err) => {}
@@ -50,7 +50,7 @@ impl SMHandler
     {
         let segment_size = self.get_current_size();
 
-        if let Some(shm_fd) = &self.sm_segment
+        if let Some(sm_fd) = &self.sm_segment
         {
             if <usize as Into<usize>>::into(self.mapped_size) != segment_size
             {
@@ -63,7 +63,7 @@ impl SMHandler
                             NonZero::new(segment_size).unwrap(),
                             nix::sys::mman::ProtFlags::PROT_READ | nix::sys::mman::ProtFlags::PROT_WRITE,
                             MapFlags::MAP_SHARED,
-                            shm_fd,
+                            sm_fd,
                             0,
                         )
                     } 
@@ -90,20 +90,15 @@ impl SMHandler
         return EExitCode::SUCCESS
     }
 
-    pub fn resize(&mut self) -> EExitCode 
-    {
-        EExitCode::SUCCESS
-    }
-
     pub fn connect(&mut self, sm_name: &str) -> EExitCode 
     {
         let mode = Mode::S_IWUSR | Mode::S_IRUSR;
         self.sm_name = Some(sm_name.to_string());
         match shm_open(sm_name, OFlag::O_CREAT | OFlag::O_RDWR, mode)
         {
-            Ok(shm_fd) => 
+            Ok(sm_fd) => 
             {
-                self.sm_segment = Some(shm_fd)
+                self.sm_segment = Some(sm_fd)
             }
             Err(error) => 
             {
@@ -116,8 +111,6 @@ impl SMHandler
 
     pub fn disconnect(&mut self, unlink: bool) -> EExitCode 
     {
-        let mut exit_code = EExitCode::SUCCESS;
-
         if let Some(file_ptr) = &self.map_file
         {
             unsafe { 
@@ -137,41 +130,29 @@ impl SMHandler
             }
         };
 
-        if let Some(shm_fd) = &self.sm_segment
-        {
-            if unlink
-            { 
-                let _ = shm_unlink(<Option<String> as Clone>::clone(&self.sm_name).unwrap().as_str());
-            }
+        if unlink
+        { 
+            let _ = shm_unlink(<Option<String> as Clone>::clone(&self.sm_name).unwrap().as_str());
+        }
 
-            match close(shm_fd.as_raw_fd())
-            {
-                Ok(_) => {}
-                Err(error) => 
-                { 
-                    log(&format!("Error close with {}", error)); 
-                    exit_code = EExitCode::FAIL;
-                }
-            }
+        // OwnedFd will be closed in the drop
+        self.sm_segment = None;
 
-            self.sm_segment = None
-        };
-
-        return exit_code;
+        return EExitCode::SUCCESS;
     }
 
     pub fn write(&mut self, payload: &str) -> EExitCode 
     {
         let mut exit_code = EExitCode::SUCCESS;
         let segment_size = self.get_current_size();
-        log(&format!("Shared memory write '{} {}' bytes", payload, payload.len()));
+        log(&format!("Shared memory write '{}' {} bytes", payload, payload.len()));
         let new_size = self.calculate_best_size(payload.len());
         if segment_size != new_size
         {
-            log(&format!("Shared memory resize '{} -> {}'", segment_size, new_size));
-            if let Some(shm_fd) = &self.sm_segment
+            log(&format!("Shared memory resize '{}->{}'", segment_size, new_size));
+            if let Some(sm_fd) = &self.sm_segment
             {
-                match ftruncate(shm_fd, new_size as i64)
+                match ftruncate(sm_fd, new_size as i64)
                 {
                     Ok(_) => { exit_code = self.update_map()}
                     Err(error) => 
@@ -185,10 +166,10 @@ impl SMHandler
 
         if exit_code == EExitCode::SUCCESS
         {
-            if let Some(shm_fd) = &self.sm_segment
+            if let Some(sm_ptr) = &self.map_file
             {
                 unsafe {
-                    ptr::copy_nonoverlapping(payload.as_ptr(), shm_fd.as_raw_fd() as *mut u8, payload.len());
+                    ptr::copy_nonoverlapping(payload.as_ptr(), sm_ptr.as_ptr() as *mut u8, payload.len());
                 }
             }
         }
@@ -198,27 +179,26 @@ impl SMHandler
 
     pub fn read(&mut self, payload_size: usize) -> (String, EExitCode)
     {
-        match self.update_map()
+        if self.update_map() == EExitCode::FAIL
         {
-            EExitCode::FAIL => 
-            {
-                return ("".to_string(), EExitCode::FAIL)
-            },
-            _ => {}
+            return ("".to_string(), EExitCode::FAIL)
         }
 
-        if let Some(shm_fd) = &self.sm_segment
+        if let Some(sm_ptr) = &self.map_file
         {
             let buffer = 
             unsafe {
-                std::slice::from_raw_parts(shm_fd.as_raw_fd() as *const u8, payload_size)
+                std::slice::from_raw_parts(sm_ptr.as_ptr() as *const u8, payload_size)
             };
-        
-            if let Some(pos) = buffer.iter().position(|&x| x == 0) 
+
+            match String::from_utf8((&buffer[..payload_size]).to_vec())
             {
-                let message = str::from_utf8(&buffer[..pos]).unwrap();
-                log(&format!("Shared memory read '{}' {} bytes", message, message.len()));
-                return (message.to_string(), EExitCode::SUCCESS)
+                Ok(message) => 
+                {
+                    log(&format!("Shared memory read '{}' {} bytes", message, message.len()));
+                    return (message, EExitCode::SUCCESS)
+                }
+                Err(_) => {}
             }
         };
 
