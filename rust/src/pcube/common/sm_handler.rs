@@ -126,7 +126,6 @@ impl SMHandler
                         log(&format!("Error munmap with {}", error));
                     }
                 }
-                
             }
         };
 
