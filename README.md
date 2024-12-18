@@ -52,3 +52,21 @@ python3.11 ../python/main.py --host
 #!/bin/bash
 ../rust/target/debug/rsservice
 ```
+
+# Parallelcube tutorials:
+* [Part 1: POSIX message queue](https://www.parallelcube.com/2024/06/01/services-ipc-posix-queues/)
+* [Part 2: POSIX shared memory](https://www.parallelcube.com/2024/08/24/service-design-shared/)
+
+## More UE4 Tutorials and gamedev
+https://www.parallelcube.com/tutorials/
+
+### Support
+Patreon: https://www.patreon.com/BYC
+
+Ko-fi: https://ko-fi.com/cristianbarrio
+
+Twitter: https://twitter.com/parallelcube
+
+Instagram: https://www.instagram.com/parallelcube
+
+Youtube: https://www.youtube.com/channel/UC4xgSihU3i2mPe_vXSWWUXQ
