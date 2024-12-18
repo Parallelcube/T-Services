@@ -4,10 +4,13 @@ This repository contains the implementation of a service host-worker using diffe
 ```
 ┌─────────────┐   POSIX Queue (request)    ┌─────────────┐
 │             ├───────────────────────────►│             │
-│  Service A  │                            │  Service B  │
-│   (Host)    │                            │  (Worker)   │
-│             │◄───────────────────────────┤             │
-└─────────────┘   POSIX Queue (response)   └─────────────┘
+│  Service A  │◄───────────────────────────│  Service B  │
+│   (Host)    │   POSIX Queue (response)   │  (Worker)   │
+│             │                            |             │
+│             │       ┌────────────┐       |             │
+│             ├───────│   Shared   ├───────│             │
+│             │       │   Memory   │       |             │
+└─────────────┘       └────────────┘       └─────────────┘
 ```
 
 # Current languages
