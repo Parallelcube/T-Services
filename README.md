@@ -69,4 +69,4 @@ Twitter: https://twitter.com/parallelcube
 
 Instagram: https://www.instagram.com/parallelcube
 
-Youtube: https://www.youtube.com/channel/UC4xgSihU3i2mPe_vXSWWUXQ
+Youtube: https://www.youtube.com/@ParallelCube
