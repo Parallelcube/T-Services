@@ -129,13 +129,13 @@ impl SMHandler
             }
         };
 
+        // OwnedFd will be closed in the drop
+        self.sm_segment = None;
+
         if unlink
         { 
             let _ = shm_unlink(<Option<String> as Clone>::clone(&self.sm_name).unwrap().as_str());
         }
-
-        // OwnedFd will be closed in the drop
-        self.sm_segment = None;
 
         return EExitCode::SUCCESS;
     }

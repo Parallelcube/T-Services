@@ -51,9 +51,9 @@ class SMHandler:
 
         if self.sm_segment is not None:
             try:
+                self.sm_segment.close_fd()
                 if unlink:
                     self.sm_segment.unlink()
-                self.sm_segment.close_fd()
             except Exception as ex:
                 log(f"Error sm segment close {ex}")
                 return EExitCode.FAIL

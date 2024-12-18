@@ -59,16 +59,22 @@ int SMHandler::disconnect(const bool& unlink)
 
     if (_sm_segment != SM_ERROR)
     {
-        if (unlink)
-        {
-            shm_unlink(_sm_name.c_str());
-        }
 
         if (close(_sm_segment) == SM_ERROR)
         {
             log(std::string("Error close with ") + strerror(errno));
             exit_code = EXIT_FAILURE;
         }
+
+        if (unlink)
+        {
+            if (shm_unlink(_sm_name.c_str()) == SM_ERROR)
+            {
+                log(std::string("Error unlink with ") + strerror(errno));
+                exit_code = EXIT_FAILURE;
+            }
+        }
+
         _sm_segment  = SM_ERROR;
     }
 
